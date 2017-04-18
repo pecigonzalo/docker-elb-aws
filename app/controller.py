@@ -53,24 +53,36 @@ def destroyELBPort(port, elb_name, elb_client):
 
 def worker(worker_id, work_queue, elb_client, elb_config, docker_client):
     # Set debug format to log worker id
-    while True:
-        event = work_queue.get()
+    logger.debug("Starting worker {}".format(worker_id))
+    try:
+        while True:
+            event = work_queue.get()
 
-        container_id = event.get("id")
-        container = docker_client.containers.get(container_id=container_id)
+            container_id = event.get("id")
+            container = docker_client.containers.get(container_id=container_id)
 
-        for mapping in getPorts(container):
-            port = mapping.get("HostPort")
-            elb_name = elb_config.get('main', port.get("HostIp"))
+            for mapping in getPorts(container):
+                logger.debug("Container: {} Action: {} Mapping: {}".format(
+                    container,
+                    event.get("Action"),
+                    mapping,
+                ))
+                port = mapping.get("HostPort")
+                elb_name = elb_config.get('main', mapping.get("HostIp"))
+                logger.debug("ELB: {}".format(elb_name))
 
-            if event.get("Action") == "start":
-                logger.info("{}:AWS will create {}".format(worker_id, port))
-                createELBPort(int(port), elb_name, elb_client)
+                if event.get("Action") == "start":
+                    logger.info("{}:AWS will create {}".format(worker_id, port))
+                    createELBPort(int(port), elb_name, elb_client)
 
-            elif event.get("Action") == "kill":
-                logger.info("{}:AWS will destroy {}".format(worker_id, port))
-                destroyELBPort(int(port), elb_name, elb_client)
-        work_queue.task_done()
+                elif event.get("Action") == "kill":
+                    logger.info("{}:AWS will destroy {}".format(worker_id, port))
+                    destroyELBPort(int(port), elb_name, elb_client)
+            work_queue.task_done()
+    except Exception as e:
+        logger.error(e)
+        pass
+        # Thread should kill main
 
 
 @click.command()
@@ -99,7 +111,7 @@ def run(workers, debug, region):
         logger.debug("Debug loggin enabled")
 
     elb_config = ConfigParser.RawConfigParser()
-    elb_config.read(['/var/lib/docker/swarm/config.cfg'])
+    elb_config.read('/var/lib/docker/swarm/config.cfg')
 
     docker_client = docker.from_env()
     elb_client = boto3.client('elb', region_name=region)
