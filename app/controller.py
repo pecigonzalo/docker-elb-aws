@@ -82,9 +82,15 @@ def updateELB(elb_client, elb_config, ports):
         .get("ListenerDescriptions")  # Get Descriptions from array
 
     for listener in listeners:
+        # EG:
+        # [{u'Listener': {u'InstancePort': 44554,
+        # u'InstanceProtocol': 'HTTP',
+        # u'LoadBalancerPort': 80,
+        # u'Protocol': 'HTTP'},
+        # u'PolicyNames': []}]
         current_listeners.append(
             (
-                int(listener.get("Listener").get("InstancePort")),
+                int(listener.get("Listener").get("LoadBalancerPort")),
                 str(listener.get("Listener").get("InstanceProtocol")),
             )
         )
