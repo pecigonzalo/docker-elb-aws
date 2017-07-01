@@ -5,7 +5,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 ENV AWS_REGION ''
 ENV DEBUG false
-ENV WORKERS 2
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \

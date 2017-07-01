@@ -143,6 +143,7 @@ def updateELB(elb_client, elb_config, ports):
 @click.option(
     '--poll_interval',
     default=3,
+    envvar='POLL_INTERVAL',
     help='Polling interval in seconds (default 3).'
     )
 def run(debug, config, region, poll_interval):
