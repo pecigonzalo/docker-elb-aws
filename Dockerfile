@@ -1,19 +1,25 @@
-FROM debian:8
+FROM debian:stretch-slim
 MAINTAINER Gonzalo Peci <pecigonzalo@outlook.com>
-ENV DEBIAN_FRONTEND noninteractive
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 ENV AWS_REGION ''
 ENV DEBUG false
 ENV WORKERS 2
 
 RUN apt-get update && \
-  apt-get install -y \
-    jq \
-    libltdl-dev \
-    python-pip \
-    wget && \
-  pip install -U pip && \
-  pip install awscli
+    apt-get install --no-install-recommends -y \
+        jq \
+        libltdl-dev \
+        python-setuptools \
+        python-wheel \
+        python-pip \
+        wget && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
+
+RUN pip install -U pip && \
+    pip install --no-cache-dir awscli
 
 COPY ./app /app
 WORKDIR /app
